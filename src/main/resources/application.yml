@@ -1,0 +1,11 @@
+# https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html
+# to set up a local dynamo
+dynamo:
+  endpoint: http://localhost:4569
+
+server:
+  port: 9080
+
+spring:
+  main:
+    allow-bean-definition-overriding: true

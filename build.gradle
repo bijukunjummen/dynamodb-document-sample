@@ -1,0 +1,107 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+}
+
+plugins {
+    id 'com.google.cloud.tools.jib' version '2.6.0'
+    id "com.gorylenko.gradle-git-properties" version "2.2.0"
+    id 'org.springframework.boot' version '2.3.5.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.72' apply false
+    id 'org.jetbrains.kotlin.plugin.spring' version '1.3.72' apply false
+}
+
+apply plugin: 'kotlin'
+apply plugin: 'kotlin-spring'
+group = 'org.bk.samples'
+version = '0.0.2-SNAPSHOT'
+ext {
+    sourceCompatibility = 11
+    targetCompatibility = 11
+}
+compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs = ["-Xjsr305=strict"]
+        jvmTarget = "1.8"
+    }
+}
+compileTestKotlin {
+    kotlinOptions {
+        freeCompilerArgs = ["-Xjsr305=strict"]
+        jvmTarget = "1.8"
+    }
+}
+
+repositories {
+    jcenter()
+    mavenCentral()
+    maven {
+        url "https://s3-us-west-2.amazonaws.com/dynamodb-local/release"
+    }
+}
+
+dependencies {
+    implementation('org.springframework.boot:spring-boot-starter-actuator')
+    implementation('org.springframework.boot:spring-boot-starter-webflux')
+    implementation('com.fasterxml.jackson.module:jackson-module-kotlin')
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("io.vavr:vavr:0.10.2")
+    implementation('com.github.bijukunjummen:aws-sdk2-dynamo-json-helper:0.10.0')
+
+    implementation("software.amazon.awssdk:dynamodb")
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: "junit", module: "junit"
+    }
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testRuntime("org.junit.jupiter:junit-jupiter-engine")
+
+    testImplementation('io.projectreactor:reactor-test')
+
+    testImplementation("com.amazonaws:DynamoDBLocal:1.13.0") {
+        exclude module: "mockito-core"
+    }
+    testImplementation("org.mockito:mockito-core:2.23.4")
+    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.0.0"
+    testImplementation("org.testcontainers:dynalite:1.10.4")
+    testImplementation("org.testcontainers:junit-jupiter:1.10.4")
+
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'software.amazon.awssdk:bom:2.15.25'
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+task copyNativeDeps(type: Copy) {
+	mkdir "build/native-libs"
+	from(configurations.testRuntimeClasspath) {
+		include '*.dll'
+		include '*.dylib'
+		include '*.so'
+	}
+	into 'build/native-libs'
+}
+
+compileTestJava {
+    dependsOn copyNativeDeps
+}
+
+task showAllConfigurations {
+    doLast {
+        println project.configurations
+        project.configurations.each() {
+            println "name: ${it.name}, transitive: ${it.transitive}, visible: ${it.visible}, description: ${it.description}, state: ${it.state}"
+
+        }
+    }
+}
